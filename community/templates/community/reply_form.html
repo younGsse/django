@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container my-3">
+    <h5 class="border-bottom pb-2">Reply</h5>
+    <form method="post" class="post-form">
+        {% csrf_token %}
+        {% include "form_errors.html" %}
+        <div class="form-group">
+            <label for="reply_text">reply_text</label>
+            <textarea class="form-control" name="reply_text" id="reply_text"
+                      rows="10">{{ form.reply_text.value|default_if_none:'' }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
+
+
+{% endblock %}

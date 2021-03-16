@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load community_filter %}
+
+{% block content %}
+<div class="container my-3">
+    {% if messages %}
+    <div class="alert alert-danger my-3" role="alert">
+        {% for message in messages %}
+            <strong>{{ message.tags }}</strong>
+            <ul><li>{{ message.message }}</li></ul>
+        {% endfor %}
+    </div>
+    {% endif %}
+    <div class="p-2">
+        <div>
+            <h2 class="border-bottom py-2">{{ fiction.fiction_subject }}</h2>
+        </div>
+        {% if request.user == fiction.author %}
+        <div class="my-3 d-md-flex justify-content-md-end">
+            <div>
+                <a href="{% url 'community:fiction_modify' fiction.id %}"
+                   class="btn btn-sm btn-outline-secondary">modify</a>
+            </div>
+            <div>
+                <a href="#" class="delete btn btn-sm btn-outline-secondary"
+                    data-uri="{% url 'community:fiction_delete' fiction.id %}">delete</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <div class="card my-3">
+        <div class="card-body">
+            <div class="card-text">{{ fiction.fiction_text|mark }}</div>
+            <div class="d-flex justify-content-end">
+                <div class="badge bg-light p-2 text-left">
+                    <div class="mb-2">{{ fiction.author.username }}</div>
+                    {% if fiction.modified_time %}
+                    <div>modified at {{ fiction.modified_time }}</div>
+                    {% else %}
+                    <div>{{ fiction.create_time }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h5 class="border-bottom my-3 py-2">{{ fiction.comment_set.count }} comments</h5>
+    {% for comment in fiction.comment_set.all %}
+    <a name="comment_{{ comment.id }}"></a>
+    <div class="card my-3">
+        <div class="card-body">
+            <div class="card-text">{{ comment.comment_text|mark }}</div>
+            <div class="d-flex justify-content-end">
+                <div class="badge bg-light p-2 text-left">
+                    <div class="mb-2">{{ comment.author.username }}</div>
+                    {% if comment.modified_time %}
+                    <div>modified at {{ comment.modified_time }}</div>
+                    {% else %}
+                    <div>{{ comment.create_time }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if comment.reply_set.count > 0 %}
+            <div class="my-3">
+            {% for reply in comment.reply_set.all %}
+                <a name="reply_{{ reply.id }}"></a>
+                <div class="reply py-2 text-muted">
+                    <span style="white-space: pre-line;">{{ reply.reply_text }}</span>
+                    <span>
+                        - {{ reply.author }}, {% if reply.modified_time %}modified at {{ reply.modified_time }}{% else %}{{ reply.create_time }}{% endif %}
+                    </span>
+                    {% if request.user == reply.author %}
+                    <a href="{% url 'community:reply_modify' reply.id %}" class="small">modify</a>
+                    <a href="#" class="delete small" data-uri="{% url 'community:reply_delete' reply.id %}">delete</a>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            </div>
+            {% endif %}
+            <div>
+                <a href="{% url 'community:reply_create' comment.id %}" class="small"><small>reply...</small></a>
+            </div>
+
+
+            {% if request.user == comment.author %}
+            <div class="my-3">
+                <a href="{% url 'community:comment_modify' comment.id %}"
+                   class="btn btn-sm btn-outline-secondary">modify</a>
+                <a href="#" class="delete btn btn-sm btn-outline-secondary"
+                    data-uri="{% url 'community:comment_delete' comment.id %}">delete</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+
+    <form action="{% url 'community:comment_create' fiction.id %}" method="post" class="my-3">
+        {% csrf_token %}
+        {% if form.errors %}
+        <div class="alert alert-danger" role="alert">
+            {% for field in form %}
+                {% if field.errors %}
+                <strong>{{ field.label }}</strong>
+                {{ field.errors }}
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div class="form-group my-3">
+            <textarea {% if not user.is_authenticated %}disabled{% endif %}
+                    name="comment_text" id="comment_text" class="form-control" rows="5"></textarea>
+        </div>
+        <input type="submit" value="comment" class="btn btn-dark">
+    </form>
+</div>
+{% endblock %}
+
+{% block script %}
+<script type='text/javascript'>
+$(document).ready(function(){
+    $(".delete").on('click', function() {
+        if(confirm("Really?")) {
+            location.href = $(this).data('uri');
+        }
+    });
+});
+</script>
+{% endblock %}
